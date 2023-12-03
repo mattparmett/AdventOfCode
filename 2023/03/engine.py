@@ -47,37 +47,27 @@ def neighbors(row, col):
 
 
 if __name__ == "__main__":
-    # Part 1
     # Iterate through matrix.  When see symbol, add all numbers around it,
     # and replace each number with periods after adding
     matrix = read_input('input.txt')
     p1_result = 0
-    for row_idx, row in enumerate(matrix):
-        for col_idx, c in enumerate(row):
-            if is_symbol(c):
-                for (n_row, n_col) in neighbors(row_idx, col_idx):
-                    if matrix[n_row][n_col].isdigit():
-                        num_start, num_end = get_part_num_idxs(n_row, n_col)
-                        p1_result += get_num(n_row, num_start, num_end)
-                        mark_num_used(n_row, num_start, num_end)
-    print(p1_result)
-
-    # Part 2
-    matrix = read_input('input.txt')
     p2_result = 0
     for row_idx, row in enumerate(matrix):
         for col_idx, c in enumerate(row):
-            if c == '*':
+            if is_symbol(c):
                 adj_nums = list()
                 for (n_row, n_col) in neighbors(row_idx, col_idx):
                     if matrix[n_row][n_col].isdigit():
                         num_start, num_end = get_part_num_idxs(n_row, n_col)
                         num = get_num(n_row, num_start, num_end)
-                        adj_nums.append(num)
+                        p1_result += num
+                        if c == '*':
+                            adj_nums.append(num)
                         mark_num_used(n_row, num_start, num_end)
-                
-                if len(adj_nums) == 2:
+
+                if c == '*' and len(adj_nums) == 2:
                     p2_result += prod(adj_nums)
 
+    print(p1_result)
     print(p2_result)
 
