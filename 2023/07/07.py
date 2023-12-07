@@ -1,4 +1,3 @@
-from enum import IntEnum
 from collections import Counter
 
 INPUT = "input.txt"
@@ -17,53 +16,12 @@ def parse_input(file=INPUT):
     with open(file) as f:
         return [tuple(line.split()) for line in f.readlines()]
 
-def card_to_value(card_str, p1=True):
-    try:
-        return int(card_str)
-    except ValueError:
-        return face_cards[card_str]
-
-class HandType(IntEnum):
-    FIVE_KIND = 6
-    FOUR_KIND = 5
-    FULL_HOUSE = 4
-    THREE_KIND = 3
-    TWO_PAIR = 2
-    ONE_PAIR = 1
-    HIGH_CARD = 0
 
 class Hand:
     def __init__(self, hand_str, bid):
         self.hand = hand_str
         self.bid = int(bid)
-        self.cards = [card_to_value(c) for c in hand_str]
-
-    @property
-    def hand_type(self):
-        card_set = set(self.cards)
-
-        match len(card_set):
-            case 1:
-                return HandType.FIVE_KIND
-
-            case 2:
-                if self.hand.count(self.hand[0]) in [2, 3]:
-                    return HandType.FULL_HOUSE
-
-                return HandType.FOUR_KIND
-
-            case 3:
-                for card in card_set:
-                    if self.cards.count(card) == 3:
-                        return HandType.THREE_KIND
-
-                return HandType.TWO_PAIR
-
-            case 4:
-                return HandType.ONE_PAIR
-
-            case _:
-                return HandType.HIGH_CARD
+        self.cards = [face_cards.get(c) or int(c) for c in hand_str]
 
     @property
     def best_hand(self):
@@ -82,29 +40,41 @@ class Hand:
 
         return Hand(best_hand, self.bid)
 
-    @property
-    def cards_p2(self):
-        return [
-            card if card != card_to_value('J') else 0
-            for card in self.cards
-        ]
-
 
 if __name__ == "__main__":
-    hand_list = parse_input()
-    hands = [Hand(h[0], h[1]) for h in hand_list]
+    hands = [Hand(h[0], h[1]) for h in parse_input()]
 
-    p1_hands = sorted(hands, key=lambda h: (h.hand_type, h.cards))
+    p1_hands = sorted(
+        hands,
+        key=lambda h: (
+            # Shorter set = fewer card values in hand
+            -len(set(h.cards)),
+            # Higher max card freq = better hand
+            Counter(h.cards).most_common(1)[0][1],
+            # Tiebreak: values of actual cards
+            h.cards
+        )
+    )
+
     p1_score = sum([
         (rank + 1) * hand.bid
         for rank, hand in enumerate(p1_hands)
     ])
     print(p1_score)
 
-    p2_hands = sorted(hands, key=lambda h: (h.best_hand.hand_type, h.cards_p2))
+    # Sort by best hand instead of actual hand for p2
+    p2_hands = sorted(
+        hands,
+        key=lambda h: (
+            -len(set(h.best_hand.cards)),
+            Counter(h.best_hand.cards).most_common(1)[0][1],
+            # J = 0 for part 2
+            [c if c != face_cards['J'] else 0 for c in h.cards]
+        )
+    )
+
     p2_score = sum([
         (rank + 1) * hand.bid
         for rank, hand in enumerate(p2_hands)
     ])
     print(p2_score)
-
